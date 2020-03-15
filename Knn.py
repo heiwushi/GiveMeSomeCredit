@@ -128,10 +128,11 @@ def predict(model:KDTree, validate_input, validate_label):
     for i in range(len(validate_input)):
         neighbors_label = []
         print("======================",i,"======================")
-        results = model.search_k_nearest_neighbors(validate_input[i], 10)
+        results = model.search_k_nearest_neighbors(validate_input[i], 100)
         for r in results:
             neighbors_label.append(r.label)
         counter = Counter(neighbors_label)
+        print(counter[1]/(counter[0]+counter[1]))
         predict_label.append(counter[1]/(counter[0]+counter[1]))
     return np.asarray(predict_label, dtype=np.float32)
 
