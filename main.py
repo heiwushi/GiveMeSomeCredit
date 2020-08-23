@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 import sklearn.metrics as metrics
-import functools
-
+import matplotlib
+matplotlib.use('TkAgg')
 np.random.seed(1)
 train_file_path = 'data/cs-training.csv'
 test_file_path = 'data/cs-test.csv'
@@ -21,19 +21,41 @@ def set_pandas():
 
 def preprocess():
     df = pd.read_csv('data/cs-training.csv')
-    print(df.info())
+    df.rename(columns={'Unnamed: 0': 'ID'}, inplace=True)
+    df.drop_duplicates()
     for c in df.columns:
-        if c in ["Unnamed: 0","SeriousDlqin2yrs "]:
+        if c in ["no","SeriousDlqin2yrs"]:
             continue
-        print("------------------------------------------------")
-        print(c, type(df[c]))
+        #print("------------------------------------------------")
+        #print(c, type(df[c]))
         mean_val = df[c].mean()
         max_val = df[c].max()
         df[c] = df[c].fillna(value=mean_val)
         df[c] = df[c].apply(lambda x: float(x) / max_val)
+    #print(df.info())
+    #print(df['SeriousDlqin2yrs'].value_counts())
+
+    #corr = df.corr()
+
+
     dataset = df.values
+    new_dataset = []
+    d0=0
+    d1=0
+    for d in dataset:
+        if d1<10000 and d[1]>0.90:
+            d1+=1
+            new_dataset.append(d)
+        if d0<10000 and d[1]<0.10:
+            d0+=1
+            new_dataset.append(d)
+    dataset=np.asarray(new_dataset)
+
+
+
+
     validate_ids = np.random.choice(range(dataset.shape[0]), int(0.01 * dataset.shape[0]), replace=False)
-    validate_ids = np.asarray(range(140000,150000))
+    #validate_ids = np.asarray(range(140000,150000))
     train_ids = set(range(dataset.shape[0])) - set(validate_ids)
     train_ids, validate_ids = sorted(train_ids), sorted(validate_ids)
     train_dataset = dataset[train_ids]
@@ -58,12 +80,17 @@ def eval(y_true, y_score):
 
 def main():
     set_pandas()
+    preprocess()
     train_input, train_label, validate_input, validate_label = preprocess()
-
-    from Knn import call
+    #validate_input, validate_label = train_input, train_label
+    #from Knn import call
+    #from SVM import call
+    from GBDT import call
     predict_score = call(train_input, train_label, validate_input, validate_label)
     accuracy_score, presion_score, recall_score, ap, auc = eval(validate_label, predict_score)
     print(accuracy_score, presion_score, recall_score, ap, auc)
+
+
 
 if __name__ == '__main__':
     main()
